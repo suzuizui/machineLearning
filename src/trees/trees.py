@@ -1,3 +1,4 @@
+#encoding:utf-8
 '''
 Created on Oct 12, 2010
 Decision Tree Source Code for Machine Learning in Action Ch. 3
@@ -127,4 +128,4 @@ def grabTree(filename):
     return pickle.load(fr)
 
 myDat,labels =createDataSet()
-print splitDataSet(myDat,0,0)
+print chooseBestFeatureToSplit(myDat)
