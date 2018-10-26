@@ -12,7 +12,7 @@ def createDataSet():
                [1, 1, 'yes'],
                [1, 0, 'no'],
                [0, 1, 'no'],
-               [0, 1, 'no'],[0,0,'maybe']]
+               [0, 1, 'no']]
     labels = ['no surfacing', 'flippers']
     # change to discrete values
     return dataSet, labels
@@ -33,6 +33,13 @@ def calcShannonEnt(dataSet):
 
 
 def splitDataSet(dataSet, axis, value):
+    """
+    按照给定的特征划分数据集
+    :param dataSet: 待划分的数据集
+    :param axis: 划分数据集的特征
+    :param value: 命中的特征值
+    :return:
+    """
     retDataSet = []
     for featVec in dataSet:
         if featVec[axis] == value:
@@ -43,6 +50,11 @@ def splitDataSet(dataSet, axis, value):
 
 
 def chooseBestFeatureToSplit(dataSet):
+    """
+    选择最好的数据集划分方式
+    :param dataSet:
+    :return:
+    """
     numFeatures = len(dataSet[0]) - 1  # the last column is used for the labels
     baseEntropy = calcShannonEnt(dataSet)
     bestInfoGain = 0.0;
@@ -115,4 +127,4 @@ def grabTree(filename):
     return pickle.load(fr)
 
 myDat,labels =createDataSet()
-print calcShannonEnt(myDat)
+print splitDataSet(myDat,0,0)
