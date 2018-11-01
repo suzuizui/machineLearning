@@ -1,11 +1,14 @@
-#encoding:utf-8
+# encoding:utf-8
 '''
 Created on Oct 12, 2010
 Decision Tree Source Code for Machine Learning in Action Ch. 3
 @author: Peter Harrington
+    ID3决策树算法
 '''
-from math import log
 import operator
+from math import log
+
+import treePlotter
 
 
 def createDataSet():
@@ -20,6 +23,11 @@ def createDataSet():
 
 
 def calcShannonEnt(dataSet):
+    """
+    计算给定数据集的香农熵
+    :param dataSet:数据集
+    :return: 熵
+    """
     numEntries = len(dataSet)
     labelCounts = {}
     for featVec in dataSet:  # the the number of unique elements and their occurance
@@ -53,29 +61,35 @@ def splitDataSet(dataSet, axis, value):
 def chooseBestFeatureToSplit(dataSet):
     """
     选择最好的数据集划分方式
-    :param dataSet:
-    :return:
+    :param dataSet: 数据集
+    :return: best特征值的下标
     """
-    numFeatures = len(dataSet[0]) - 1  # the last column is used for the labels
-    baseEntropy = calcShannonEnt(dataSet)
-    bestInfoGain = 0.0;
+    numFeatures = len(dataSet[0]) - 1  # 最后一列是分类值
+    baseEntropy = calcShannonEnt(dataSet)  # 总熵
+    bestInfoGain = 0.0;  # 最好的信息增益
     bestFeature = -1
     for i in range(numFeatures):  # iterate over all the features
-        featList = [example[i] for example in dataSet]  # create a list of all the examples of this feature
+        featList = [example[i] for example in dataSet]  # 创建唯一的分类标签列表
         uniqueVals = set(featList)  # get a set of unique values
         newEntropy = 0.0
-        for value in uniqueVals:
+        for value in uniqueVals:  # 计算每种划分方式的信息熵
             subDataSet = splitDataSet(dataSet, i, value)
             prob = len(subDataSet) / float(len(dataSet))
             newEntropy += prob * calcShannonEnt(subDataSet)
         infoGain = baseEntropy - newEntropy  # calculate the info gain; ie reduction in entropy
-        if (infoGain > bestInfoGain):  # compare this to the best gain so far
+        if (infoGain > bestInfoGain):  # 信息增益是熵的减少，信息无序度的减少，所以要选熵最小的
             bestInfoGain = infoGain  # if better than current best, set to best
             bestFeature = i
     return bestFeature  # returns an integer
 
 
 def majorityCnt(classList):
+    """
+    当数据集已经消耗了所有的特征，分类扔不唯一的时候
+    需要在当前数据集中使用多数表决的方法
+    :param classList:
+    :return:
+    """
     classCount = {}
     for vote in classList:
         if vote not in classCount.keys(): classCount[vote] = 0
@@ -85,11 +99,18 @@ def majorityCnt(classList):
 
 
 def createTree(dataSet, labels):
-    classList = [example[-1] for example in dataSet]
+    """
+    递归的创建决策树
+    :param dataSet: 数据集
+    :param labels:  标签列表
+    :return:
+    """
+    classList = [example[-1] for example in dataSet]  # 分类列表
     if classList.count(classList[0]) == len(classList):
-        return classList[0]  # stop splitting when all of the classes are equal
-    if len(dataSet[0]) == 1:  # stop splitting when there are no more features in dataSet
-        return majorityCnt(classList)
+        return classList[0]  # 所有的类标签相等
+    if len(dataSet[0]) == 1:  # 列数等于1，所有的特征值均已经使用完
+        return majorityCnt(classList)  # 多数表决
+    # 选择最好的划分数据集的特征
     bestFeat = chooseBestFeatureToSplit(dataSet)
     bestFeatLabel = labels[bestFeat]
     myTree = {bestFeatLabel: {}}
@@ -103,29 +124,49 @@ def createTree(dataSet, labels):
 
 
 def classify(inputTree, featLabels, testVec):
+    """
+    用决策树获取分类(递归)
+    :param inputTree: 决策树
+    :param featLabels: 特征列表
+    :param testVec: 特征值列表
+    :return: 记录的分类
+    """
+    # 获得根节点的特征
     firstStr = inputTree.keys()[0]
     secondDict = inputTree[firstStr]
+    # 将标签字符串转换为索引数字
     featIndex = featLabels.index(firstStr)
+    # 获得特征的值是多少
     key = testVec[featIndex]
+    # 获得子树或者叶节点
     valueOfFeat = secondDict[key]
     if isinstance(valueOfFeat, dict):
         classLabel = classify(valueOfFeat, featLabels, testVec)
     else:
+        # 如果是叶节点，则返回
         classLabel = valueOfFeat
     return classLabel
 
 
 def storeTree(inputTree, filename):
+    """
+    存储决策树(学习结果)
+    :param inputTree: 决策树
+    :param filename: 文件名称
+    """
     import pickle
     fw = open(filename, 'w')
+    # 序列化对象并存储
     pickle.dump(inputTree, fw)
     fw.close()
 
 
 def grabTree(filename):
+    """
+    读取决策树
+    :param filename:文件名称
+    :return:
+    """
     import pickle
     fr = open(filename)
     return pickle.load(fr)
-
-myDat,labels =createDataSet()
-print chooseBestFeatureToSplit(myDat)
